@@ -14,7 +14,7 @@ function generate_dockerfile() {
 
   local run_install_interpreter=""
   if [ -n "$interpreter" ]; then
-    install_interpreter="\&\& ./bin/install-interpreter.sh $interpreter"
+    install_interpreter="\&\& install-interpreter.sh $interpreter"
   fi
 
   mkdir -p `dirname $file`

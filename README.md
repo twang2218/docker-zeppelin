@@ -24,9 +24,11 @@ All data are stored in `/data` directory, such as:
 
 So, to persistent the data, a docker volume should be used to mount on the `/data` directory.
 
+> If you want to mount `/data` to host directory, instead of docker volume, please note, the directory's owner uid is `501`, which is user `zeppelin` inside the container.
+
 ```bash
 $ docker volume create zeppelin-data
 $ docker run -d -v zeppelin-data:/data -p 8080:8080 twang2218/zeppelin:common
 ```
 
-
+It's recommended to use `docker-compose` for the service, an example `docker-compose.yml` is provided for this purpose.
