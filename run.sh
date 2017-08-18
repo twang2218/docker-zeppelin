@@ -1,7 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 
-IMAGE_NAME=twang2218/zeppelin
-IMAGE_TAG=test
+DOCKER_USERNAME=${DOCKER_USERNAME:-twang2218}
+IMAGE_NAME=${IMAGE_NAME:-${DOCKER_USERNAME}/zeppelin}
+IMAGE_TAG=${IMAGE_TAG:-latest}
+
+# DOCKER_TRIGGER_TOKEN should be set if you want to trigger the Docker Hub build
 
 ZEPPELIN_VERSION=2.2.0
 
@@ -56,8 +59,52 @@ function run() {
 
 function release() {
   for tag in $VARIATION; do
+    echo "Publish image '${IMAGE_NAME}:${tag}' to Docker Hub ..."
     docker push ${IMAGE_NAME}:${tag}
   done
+}
+
+function trigger_build() {
+  local tag=$1
+  if [ -n "$DOCKER_TRIGGER_TOKEN" ]; then
+    curl --silent \
+      --header "Content-Type: application/json" \
+      --request POST \
+      --data "{\"docker_tag\": \"$tag\"}" \
+      https://registry.hub.docker.com/u/${IMAGE_NAME}/trigger/${DOCKER_TRIGGER_TOKEN}
+    echo -e "\ndone."
+  else
+    echo -e "\nDOCKER_TRIGGER_TOKEN is empty"
+  fi
+}
+
+function ci() {
+  if [[ -n "${DOCKER_PASSWORD}" ]]; then
+    docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
+  else
+    echo "Cannot login to Docker Hub (DOCKER_PASSWORD is empty)"
+    return 1
+  fi
+
+  # We just trigger the `base` build to refresh the README on the Hub
+  trigger_build base
+
+  if [ "$1" == "--force" ]; then
+    # build all no matter it's changed or not
+    build
+    release
+  else
+    for tag in $VARIATION; do
+      if (git show --pretty="" --name-only | grep Dockerfile | grep -q $tag); then
+        echo "$tag has been updated, rebuilding ${IMAGE_NAME}:$tag ..."
+        docker build -t ${IMAGE_NAME}:${tag} ${tag}
+        echo "Publish image '${IMAGE_NAME}:${tag}' to Docker Hub ..."
+        docker push ${IMAGE_NAME}:${tag}
+      else
+        echo "Nothing changed in $tag."
+      fi
+    done
+  fi
 }
 
 function main() {
@@ -68,6 +115,7 @@ function main() {
     build)    build "$@" ;;
     run)      run "$@" ;;
     release)  release "$@" ;;
+    ci)       ci "$@" ;;
     *)        echo "Usage: $0 (generate|build|run|release)" ;;
   esac
 }
