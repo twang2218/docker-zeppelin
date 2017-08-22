@@ -6,6 +6,7 @@ services:
       - zeppelin-data:/data
     ports:
       - "8080:8080"
+      - "4040:4040"
     tmpfs: /tmp
     environment:
         ZEPPELIN_MEM: "-Xmx4g"

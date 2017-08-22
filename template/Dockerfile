@@ -3,18 +3,22 @@ FROM openjdk:8-jdk-slim
 
 ENV ZEPPELIN_HOME /opt/zeppelin
 ENV PATH=$PATH:${ZEPPELIN_HOME}/bin
+
+# 8080 is for zeppelin web UI
 EXPOSE 8080
+# 4040 is for spark UI
+EXPOSE 4040
 
 RUN groupadd -r --gid 501 zeppelin \
   && useradd -r --uid 501 --home-dir ${ZEPPELIN_HOME} --create-home -g zeppelin zeppelin
 
 WORKDIR ${ZEPPELIN_HOME}
 
-# For Alpine
-#   RUN apk --no-cache add bash
+# Install wget for later zeppelin installation
 RUN set -xe \
   && apt-get update \
   && apt-get install -y wget \
+  && sleep 1 \
   && rm -rf /var/lib/apt/list/*
 
 ENV ZEPPELIN_DATA /data
@@ -38,6 +42,16 @@ RUN set -xe \
   && wget http://www.apache.org/dist/zeppelin/zeppelin-${ZEPPELIN_VERSION}/zeppelin-${ZEPPELIN_VERSION}-bin-netinst.tgz \
   && tar -zxvf zeppelin-${ZEPPELIN_VERSION}-bin-netinst.tgz -C ${ZEPPELIN_HOME} --strip-components=1 \
   && rm *.tgz
+
+# Install interpreter dependencies (R, Python)
+USER root
+RUN set -xe \
+  && apt-get update \
+  && apt-get install -y #DEPENDENCIES# \
+  && chmod a+wx /usr/local/lib/R/site-library || true \
+  && sleep 1 \
+  && rm -rf /var/lib/apt/list/*
+USER zeppelin
 
 # We don't need that much memory for interpreter installation
 RUN set -xe \

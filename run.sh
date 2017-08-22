@@ -13,7 +13,8 @@ VARIATION="base common all"
 function generate_dockerfile() {
   local zeppelin_version=$1
   local interpreter=$2
-  local file=$3
+  local dependencies=$3
+  local file=$4
 
   local run_install_interpreter=""
   if [ -n "$interpreter" ]; then
@@ -24,6 +25,7 @@ function generate_dockerfile() {
   cat ./template/Dockerfile | sed \
     -e "s/#ZEPPELIN_VERSION#/$zeppelin_version/g" \
     -e "s@#INTERPRETER#@${install_interpreter}@g" \
+    -e "s/#DEPENDENCIES#/${dependencies}/g" \
     > $file
 }
 
@@ -36,12 +38,16 @@ function generate() {
   ##  less than 50MB
   local medium="alluxio,cassandra,elasticsearch,ignite,lens"
 
+  # Dependencies
+  local dep_python="python python-pip python-matplotlib python-matplotlib-data"
+  local dep_r_base="r-base"
+  local dep_r_all="$dep_r_base r-base-dev r-recommended r-cran-knitr r-cran-caret r-cran-data.table r-cran-glmnet"
   # base
-  generate_dockerfile $ZEPPELIN_VERSION "--name $xsmall,$small" base/Dockerfile
+  generate_dockerfile $ZEPPELIN_VERSION "--name $xsmall,$small" "$dep_python" base/Dockerfile
   # common
-  generate_dockerfile $ZEPPELIN_VERSION "--name $xsmall,$small,$medium" common/Dockerfile
+  generate_dockerfile $ZEPPELIN_VERSION "--name $xsmall,$small,$medium" "$dep_python $dep_r_base" common/Dockerfile
   # all
-  generate_dockerfile $ZEPPELIN_VERSION "--all" all/Dockerfile
+  generate_dockerfile $ZEPPELIN_VERSION "--all" "$dep_python $dep_r_all" all/Dockerfile
 }
 
 function build() {
@@ -105,6 +111,9 @@ function ci() {
       fi
     done
   fi
+
+  # List all the images
+  docker images
 }
 
 function main() {
