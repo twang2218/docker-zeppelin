@@ -35,7 +35,7 @@ VOLUME /tmp
 
 USER zeppelin
 
-ENV ZEPPELIN_VERSION 0.7.2
+ENV ZEPPELIN_VERSION #ZEPPELIN_VERSION#
 
 RUN set -xe \
   && cd /tmp \

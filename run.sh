@@ -6,7 +6,7 @@ IMAGE_TAG=${IMAGE_TAG:-latest}
 
 # DOCKER_TRIGGER_TOKEN should be set if you want to trigger the Docker Hub build
 
-ZEPPELIN_VERSION=2.2.0
+ZEPPELIN_VERSION=0.7.2
 
 VARIATION="base common all"
 
@@ -125,7 +125,7 @@ function main() {
     run)      run "$@" ;;
     release)  release "$@" ;;
     ci)       ci "$@" ;;
-    *)        echo "Usage: $0 (generate|build|run|release)" ;;
+    *)        echo "Usage: $0 (generate|build|run|release|ci)" ;;
   esac
 }
 
